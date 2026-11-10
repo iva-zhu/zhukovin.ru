@@ -1,0 +1,28 @@
+{{ define "title" -}}
+{{ if eq .Type "blog" }}Блог{{ else }}{{ .Title | title }}{{ end }}
+{{- end }}
+
+{{ define "main" -}}
+{{ .Content }}
+
+<ul style="list-style: none; padding: 0;">
+{{ range .Pages }}
+<li style="margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #333;">
+  <h2 style="margin-bottom: 0.25rem;">
+    <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+  </h2>
+  <small style="color: #888;">{{ .Date.Format "2 Jan 2006" }}</small>
+  <p style="margin-top: 0.75rem; color: #ccc;">
+    {{ .Summary | plainify | truncate 200 }}
+  </p>
+  {{ if .Params.tags }}
+  <div style="margin-top: 0.5rem;">
+    {{ range .Params.tags }}
+      <a href="/tags/{{ . | urlize }}/" style="display: inline-block; margin-right: 0.3rem; color: #cb9c05; font-size: 0.9rem;">#{{ . }}</a>
+    {{ end }}
+  </div>
+  {{ end }}
+</li>
+{{ end }}
+</ul>
+{{- end }}

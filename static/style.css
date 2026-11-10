@@ -1,0 +1,362 @@
+/* ========================================
+   BASE
+   ======================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  background: #111;
+  color: #fff;
+  text-align: left;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+main {
+  max-width: 70%;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ========================================
+   TYPOGRAPHY
+   ======================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #cb9c05;
+}
+
+p {
+  color: #fff;
+}
+
+/* ========================================
+   LINKS
+   ======================================== */
+
+a {
+  color: #cb9c05;
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  color: #ffd95e;
+}
+
+a:visited {
+  color: #cb9c05;
+}
+
+a:active {
+  color: #f1c93b;
+}
+
+/* Красивое подчёркивание — только в контенте, не в меню */
+main a {
+  position: relative;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+main a:hover,
+main a:focus {
+  transform: translateY(-1px);
+}
+
+main a:active {
+  transform: translateY(0);
+}
+
+main a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: #cb9c05;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s ease;
+}
+
+main a:hover::after,
+main a:focus::after {
+  transform: scaleX(1);
+}
+
+/* ========================================
+   NAVIGATION
+   ======================================== */
+
+nav {
+  background: #111;
+  border-bottom: 1px solid #222;
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  gap: 1.5rem;
+  max-width: 60rem;
+}
+
+nav a {
+  color: #cb9c05;
+}
+
+nav a:hover {
+  color: #ffd95e;
+}
+
+/* ========================================
+   LISTS
+   ======================================== */
+
+ul {
+  list-style: disc;
+}
+
+ul li::marker {
+  color: #cb9c05;
+}
+
+li {
+  color: #fff;
+}
+
+/* ========================================
+   CODE
+   ======================================== */
+
+code {
+  background: #1a1a1a;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  color: #cb9c05;
+  font-family: monospace;
+}
+
+pre {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: #fff;
+}
+
+/* ========================================
+   QUOTES
+   ======================================== */
+
+blockquote {
+  border-left: 4px solid #cb9c05;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #bbb;
+}
+
+/* ========================================
+   IMAGES
+   ======================================== */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+/* В постах: 80% на десктопе */
+article img {
+  max-width: 80%;
+  margin: 1.5rem auto;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th,
+td {
+  border: 1px solid #333;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #1a1a1a;
+  color: #cb9c05;
+  font-weight: bold;
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+  border-top: 1px solid #222;
+  margin-top: 3rem;
+}
+
+footer a {
+  color: #cb9c05;
+}
+
+/* ========================================
+   TAGS TERMS PAGE
+   ======================================== */
+
+.terms-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  margin-top: 1rem;
+}
+
+.terms-inline .term {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #1a1a1a;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #cb9c05;
+}
+
+.terms-inline .term:hover {
+  text-decoration: underline;
+}
+
+/* ========================================
+   HOME (главная)
+   ======================================== */
+
+.page-home .home-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.page-home .home-avatar {
+  width: min(320px, 70vw);
+  border-radius: 50%;
+  display: block;
+  margin: 0 auto 1.5rem;
+}
+
+/* Home: таблица проектов — вид как раньше (без рваных слов и без пустоты снизу) */
+.page-home table {
+  table-layout: auto; /* убираем fixed, пусть само распределяет */
+}
+
+.page-home td,
+.page-home th {
+  vertical-align: top; /* для правого столбца это ок */
+}
+
+/* Левый столбец — по центру строки, чтобы не было "пустоты снизу" */
+.page-home td:first-child {
+  width: 30%;
+  vertical-align: middle;
+  color: #cb9c05;
+  font-weight: 700;
+}
+
+.page-home td:first-child,
+.page-home td:first-child a {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
+}
+
+/* Во втором столбце можно безопасно переносить длинные ссылки (почта/телега) */
+.page-home td:nth-child(2) a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 1024px) {
+  .page-home .home-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  main {
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  nav {
+    padding: 0.75rem 1rem;
+  }
+
+  nav ul {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  nav li {
+    flex: 0 0 auto;
+  }
+
+  /* Картинки в постах: на мобиле лучше 100% */
+  article img {
+    max-width: 100%;
+  }
+
+  /* Таблицы: скроллится только таблица, не весь сайт */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

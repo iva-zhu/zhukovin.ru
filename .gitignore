@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Hugo build output
+public/
+resources/
+.hugo_build.lock
+
+# редактор
+.obsidian/
+.vscode/
+
+# неиспользуемая тема-предок (нужна только для сверки локально)
+themes/lugo/
+
+# временный каталог, Hugo его не читает
+/_default/
+
+# бэкапы и локальные черновики
+*.bak
+*.bak-*
+*.orig
+*.rej
+.env
+.env.*

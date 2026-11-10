@@ -1,0 +1,17 @@
+{{ define "title" -}}
+{{ .Title }}
+{{- end }}
+
+{{ define "main" -}}
+{{ .Content }}
+
+{{ if .Params.tags }}
+<hr style="margin-top: 3rem;">
+<div style="margin-top: 2rem;">
+<strong>Теги:</strong>
+{{ range .Params.tags }}
+  <a href="/tags/{{ . | urlize }}/" style="display: inline-block; margin-right: 0.5rem; padding: 0.25rem 0.5rem; background: #1a1a1a; border: 1px solid #cb9c05; border-radius: 4px;">#{{ . }}</a>
+{{ end }}
+</div>
+{{ end }}
+{{- end }}

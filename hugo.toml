@@ -1,0 +1,50 @@
+baseURL = "https://zhukovin.ru/"
+languageCode = "RU-ru"
+title = "Иван Жуковин"
+theme = "zhukovin"
+enableRobotsTXT = true
+
+[markup.goldmark.renderer]
+unsafe = true
+
+[pagination]
+pagerSize = 10
+
+[params]
+author = "Иван Жуковин"
+description = "Звукорежиссёр, продюсер и музыкант из Владивостока"
+telegram = "@iva_zhu"
+email = "ivan@zhukovin.ru"
+
+# Главная: показывать последние посты
+mainPostsLimit = 5
+
+[taxonomies]
+tag = "tags"
+category = "categories"
+
+# Меню
+[[menu.main]]
+name = "Главная"
+url = "/"
+weight = 1
+
+[[menu.main]]
+name = "Все посты"
+url = "/blog/"
+weight = 2
+
+[[menu.main]]
+name = "Теги"
+url = "/tags/"
+weight = 3
+
+[[menu.main]]
+name = "Сейчас"
+url = "/now/"
+weight = 4
+
+[[menu.main]]
+name = "Бартер"
+url = "/barter"
+weight = 5

@@ -1,0 +1,9 @@
+<ul style="list-style: none; padding: 0; margin: 1rem 0;">
+{{ range first 10 (where .Site.RegularPages "Section" "blog") }}
+  <li style="margin: 0.8rem 0; padding: 0.5rem 0; border-left: 3px solid #cb9c05; padding-left: 0.75rem;">
+    <a href="{{ .RelPermalink }}" style="color: #cb9c05; font-weight: 500;">{{ .Title }}</a>
+    <br>
+    <small style="color: #888;">{{ .Date.Format "2 Jan 2006" }}</small>
+  </li>
+{{ end }}
+</ul>

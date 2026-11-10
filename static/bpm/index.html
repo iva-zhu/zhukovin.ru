@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BPM → ms · reverb · compressor</title>
+<meta name="description" content="BPM в миллисекунды, длительности нот, реверб-пресеты и настройки компрессора от темпа.">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="canonical" href="https://zhukovin.ru/bpm/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://zhukovin.ru/bpm/">
+<meta property="og:title" content="BPM → ms · reverb · compressor">
+<meta property="og:description" content="BPM в миллисекунды, длительности нот, реверб-пресеты и пресеты компрессора от темпа.">
+<meta property="og:image" content="https://zhukovin.ru/bpm/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root{
+    --bg:#111; --card:#181818; --card2:#1f1f1f; --line:#2c2c2c;
+    --fg:#fff; --dim:#9a9a9a; --dim2:#6a6a6a;
+    --gold:#cb9c05; --gold-hi:#ffd95e; --gold-bg:rgba(203,156,5,.12); --bpm-fg:#cb9c05;
+    --r:12px;
+    --mono:"Meslo LG S","MesloLGS NF",ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  html[data-theme="light"]{
+    --bg:#fbfaf6; --card:#fff; --card2:#f7f5ef; --line:#e3ddcc;
+    --fg:#141414; --dim:#6f6b60; --dim2:#9a958a;
+    --gold:#a37700; --gold-hi:#6f5200; --gold-bg:#fbf0cf; --bpm-fg:#141414;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg)}
+  body{
+    font:16px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;
+    padding:16px 18px calc(28px + env(safe-area-inset-bottom));
+    max-width:1100px;margin:0 auto;
+  }
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  a{color:var(--gold);text-decoration:none}
+  a:hover{color:var(--gold-hi)}
+
+  /* ---------- top bar ---------- */
+  .top{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  .brand{display:block;color:var(--fg)}
+  .brand:hover{color:var(--fg)}
+  .brand b{font-size:16px;font-weight:600;letter-spacing:.01em;display:block;line-height:1.25}
+  .brand small{font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
+  .top .tools{margin-left:auto;display:flex;gap:8px}
+
+  button{font:inherit;color:var(--fg);background:var(--card2);border:1px solid var(--line);
+    border-radius:10px;padding:9px 13px;cursor:pointer;transition:.12s}
+  button:hover{border-color:var(--gold);color:var(--gold-hi)}
+  button:active{transform:translateY(1px)}
+  .icon-btn{width:40px;height:40px;padding:0;display:grid;place-items:center;font-size:16px;color:var(--dim)}
+  .icon-btn:hover{color:var(--gold)}
+  .icon-btn svg{width:16px;height:16px}
+  .step{width:40px;height:40px;padding:0;font-size:19px;line-height:1;color:var(--dim)}
+  .step:hover{color:var(--gold)}
+
+  /* ---------- tempo ---------- */
+  .tempo{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:14px 16px;margin-bottom:16px}
+  .bpmwrap{display:flex;align-items:center;gap:8px}
+  .bpmwrap input{width:3ch;background:none;border:0;color:var(--bpm-fg);
+    font:600 50px/1 var(--mono);font-variant-numeric:tabular-nums;
+    padding:0;letter-spacing:-.02em;caret-color:var(--gold);
+    cursor:ew-resize;touch-action:pan-y}
+  .bpmwrap input:focus{outline:none}
+  .bpmwrap input::-webkit-outer-spin-button,.bpmwrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .bpmwrap input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  .bpmwrap .lbl{font-size:12px;letter-spacing:.15em;color:var(--dim);margin-right:2px}
+  body.dragging{cursor:ew-resize;user-select:none}
+  .controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-left:auto}
+  .tap{font-weight:600;font-size:15px;letter-spacing:.06em;padding:10px 16px;
+    background:var(--gold-bg);border-color:var(--gold);color:var(--gold)}
+  .tap.hit{background:var(--gold);color:#111}
+  button.playing{background:var(--gold-bg);border-color:var(--gold);color:var(--gold-hi)}
+  select{font:inherit;font-size:15px;color:var(--fg);background:var(--card2);border:1px solid var(--line);
+    border-radius:10px;padding:9px 10px;cursor:pointer}
+  select:hover{border-color:var(--gold)}
+  select:focus{outline:1px solid var(--gold)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;border-radius:0;padding:9px 12px;background:transparent;color:var(--dim);font-size:14px}
+  .seg button.on{background:var(--gold-bg);color:var(--gold)}
+  kbd{font:11px/1 var(--mono);color:var(--dim);border:1px solid var(--line);border-bottom-width:2px;
+    border-radius:4px;padding:2px 5px;margin-left:7px}
+
+  .quick{display:flex;gap:7px;flex-wrap:wrap;flex-basis:100%;margin-top:2px}
+  .quick button{padding:5px 11px;font:500 13px/1.4 var(--mono);border-radius:8px;color:var(--dim)}
+  .quick button.on{background:var(--gold-bg);border-color:var(--gold);color:var(--gold)}
+  .quick .cap{font-size:11.5px;color:var(--dim2);align-self:center;margin-right:2px}
+  .tapnote{flex-basis:100%;font-size:12.5px;color:var(--dim2);margin-top:-2px}
+  .tapnote b{font-weight:600;color:var(--dim)}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:16px}
+  .tab{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;
+    padding:9px 2px;margin-right:28px;color:var(--dim);font-size:14.5px}
+  .tab:hover{color:var(--gold-hi)}
+  .tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px 16px;margin-bottom:16px}
+  .card[hidden],[hidden]{display:none}
+  .card h2{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin:0;font-weight:600}
+  .card-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+  .hint{font-size:12.5px;color:var(--dim2);margin-left:auto;text-align:right}
+
+  /* ---------- reverb presets ---------- */
+  .presets{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .preset{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:13px 14px 12px;
+    display:flex;flex-direction:column;gap:9px;transition:.12s}
+  .preset:hover{border-color:var(--gold)}
+  .preset .nm{font-size:15px;font-weight:600;letter-spacing:.01em}
+  .preset .bars{font-size:12.5px;color:var(--dim);margin-top:2px}
+  .preset .pv{font:600 26px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--gold);
+    cursor:pointer;display:inline-flex;align-items:baseline;gap:4px;align-self:flex-start}
+  .preset .pv small{font-size:12px;font-weight:400;color:var(--dim)}
+  .preset .pd{font:12.5px/1.2 var(--mono);color:var(--dim);cursor:pointer;align-self:flex-start;
+    border-bottom:1px dashed transparent}
+  .preset .pv:hover,.preset .pd:hover{color:var(--gold-hi);border-bottom-color:var(--gold)}
+  .preset .pd b{font-weight:500;color:var(--fg)}
+
+  .io{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .io label{font-size:14px;color:var(--dim);min-width:82px}
+  .io select{flex:0 1 400px;max-width:400px;min-width:140px}
+
+  /* ---------- note table ---------- */
+  .tbl{display:grid;grid-template-columns:66px repeat(3,1fr);gap:7px}
+  .tbl .h{font-size:11px;letter-spacing:.1em;color:var(--dim2);text-transform:uppercase;padding:0 0 3px 7px;align-self:end}
+  .tbl .rl{display:flex;align-items:center;font-size:14px;color:var(--dim);font-family:var(--mono);padding-left:2px}
+  .cell{background:var(--card2);border:1px solid transparent;border-radius:10px;padding:9px 11px;
+    cursor:pointer;min-width:0;overflow:hidden;transition:.1s}
+  .cell:hover{border-color:var(--gold);background:var(--gold-bg)}
+  .cell .p{font:600 18px/1.25 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.01em}
+  .cell .s{font:11.5px/1.35 var(--mono);color:var(--dim2);white-space:nowrap}
+  .cell:hover .p{color:var(--gold-hi)}
+
+  /* ================= compressor tab ================= */
+  #tab-comp .context{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+  #tab-comp .ctxlabel{font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim2)}
+  #tab-comp .chips{display:flex;gap:6px;flex-wrap:wrap}
+  #tab-comp .chip{padding:6px 12px;border-radius:8px;font-size:14px;color:var(--dim);background:transparent;border-color:var(--line)}
+  #tab-comp .chip.on{background:var(--gold-bg);border-color:var(--gold);color:var(--gold)}
+  #tab-comp .modehint{flex-basis:100%;font-size:12.5px;color:var(--dim2);margin-top:-2px}
+  #tab-comp .tbl{grid-template-columns:62px repeat(3,1fr);gap:6px}
+  #tab-comp .tbl .rl{font-size:13.5px}
+  #tab-comp .cell{padding:8px 10px}
+  #tab-comp .cell .p{font-size:17px}
+  #tab-comp .barline{font-size:12.5px;color:var(--dim2);margin-top:12px}
+  #tab-comp .barline span{cursor:pointer;border-bottom:1px dashed transparent}
+  #tab-comp .barline span:hover{color:var(--gold-hi);border-bottom-color:var(--gold)}
+  #tab-comp .presets{grid-template-columns:repeat(3,1fr);gap:12px}
+  #tab-comp .preset{padding:12px 13px 11px;gap:8px}
+  #tab-comp .phead{display:flex;align-items:baseline;gap:8px}
+  #tab-comp .phead .nm{font-size:15px;font-weight:600;letter-spacing:.01em}
+  #tab-comp .phead .tag{font:10px/1 var(--mono);letter-spacing:.04em;color:var(--dim2);margin-left:auto;white-space:nowrap}
+  #tab-comp .vals{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+  #tab-comp .v{padding:4px 5px;margin:-4px -5px;border-radius:8px;cursor:pointer;min-width:0}
+  #tab-comp .v:hover{background:var(--gold-bg)}
+  #tab-comp .v .k{display:block;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);white-space:nowrap}
+  #tab-comp .v .p{display:block;font:600 21px/1.2 var(--mono);font-variant-numeric:tabular-nums;color:var(--gold);white-space:nowrap;letter-spacing:-.01em}
+  #tab-comp .v .p small{font-size:10.5px;font-weight:400;color:var(--dim);margin-left:2px;letter-spacing:0}
+  #tab-comp .v .n{display:block;font:11px/1.3 var(--mono);color:var(--dim2);white-space:nowrap}
+  #tab-comp .v:hover .p{color:var(--gold-hi)}
+  #tab-comp .meta{display:flex;gap:12px;flex-wrap:wrap;font:11.5px/1.4 var(--mono);color:var(--dim)}
+  #tab-comp .meta span[data-copy]{cursor:pointer;border-bottom:1px dashed transparent;white-space:nowrap}
+  #tab-comp .meta span[data-copy]:hover{color:var(--gold-hi);border-bottom-color:var(--gold)}
+  #tab-comp .why{margin:0;font-size:12px;line-height:1.4;color:var(--dim)}
+  #tab-comp .sc{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  #tab-comp .scv{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;min-width:0;transition:.12s}
+  #tab-comp .scv:hover{border-color:var(--gold);background:var(--gold-bg)}
+  #tab-comp .scv .k{display:block;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);white-space:nowrap}
+  #tab-comp .scv .p{display:block;font:600 24px/1.15 var(--mono);font-variant-numeric:tabular-nums;color:var(--gold);white-space:nowrap;letter-spacing:-.01em}
+  #tab-comp .scv .p small{font-size:11px;font-weight:400;color:var(--dim);margin-left:2px}
+  #tab-comp .scv .n{display:block;font:11px/1.3 var(--mono);color:var(--dim2);white-space:nowrap}
+  #tab-comp .scv:hover .p{color:var(--gold-hi)}
+  #tab-comp .schint{font-size:12.5px;line-height:1.5;color:var(--dim2);margin-top:12px}
+
+  .foot{font-size:12.5px;color:var(--dim2);text-align:center;margin-top:22px;line-height:1.9}
+  .foot .credit{margin-top:8px;font-size:13px}
+  .foot .credit a{color:var(--dim);border-bottom:1px solid var(--line)}
+  .foot .credit a:hover{color:var(--gold);border-bottom-color:var(--gold)}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--card);
+    color:var(--gold);border:1px solid var(--gold);padding:9px 16px;border-radius:99px;font-size:13px;
+    opacity:0;transition:.18s;pointer-events:none;z-index:9;max-width:calc(100vw - 32px);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media(max-width:980px){
+    #tab-comp .presets{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:760px){
+    body{padding:12px 12px calc(22px + env(safe-area-inset-bottom));font-size:15px}
+    .presets{grid-template-columns:1fr 1fr;gap:10px}
+    .bpmwrap input{font-size:42px}
+    .controls{width:100%;margin-left:0}
+    .io select{flex:1;max-width:none}
+    .tbl{grid-template-columns:56px repeat(3,1fr);gap:6px}
+    .cell{padding:8px 8px}
+    .cell .p{font-size:16px}
+    .cell .s{font-size:10.5px}
+    #tab-comp .presets{grid-template-columns:1fr;gap:10px}
+    #tab-comp .sc{grid-template-columns:1fr 1fr}
+    #tab-comp .tbl{grid-template-columns:52px repeat(3,1fr);gap:5px}
+    #tab-comp .cell{padding:7px 8px}
+    #tab-comp .cell .p{font-size:15px}
+    .tab{margin-right:20px}
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="brand" href="https://zhukovin.ru" title="zhukovin.ru">
+    <b>zhukovin.ru</b>
+    <small data-i18n="tagline">bpm → ms · реверб</small>
+  </a>
+  <div class="tools">
+    <button class="icon-btn" id="share" title="Copy link" aria-label="Copy link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="12" height="12" rx="2"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="lang" title="Language">EN</button>
+    <button class="icon-btn" id="theme" title="Theme">◐</button>
+  </div>
+</div>
+
+<div class="tempo">
+  <div class="bpmwrap">
+    <button class="step" id="minus" title="−1">−</button>
+    <input id="bpm" type="number" inputmode="decimal" min="20" max="400" step="0.1" value="120" class="num"
+           aria-label="BPM" title="Тяните влево-вправо, ⇧ — десятками">
+    <span class="lbl">BPM</span>
+    <button class="step" id="plus" title="+1">+</button>
+  </div>
+  <div class="controls">
+    <button class="tap" id="tap" title="Tap tempo: Space или T"><span data-i18n="tap">TAP</span><kbd>Space</kbd></button>
+    <button id="metro"><span data-i18n="metro">Метроном</span><kbd>M</kbd></button>
+    <select id="sig" title="Time signature">
+      <option value="2/4">2/4</option><option value="3/4">3/4</option><option value="4/4" selected>4/4</option>
+      <option value="5/4">5/4</option><option value="6/8">6/8</option><option value="7/8">7/8</option>
+    </select>
+    <div class="seg" id="unit">
+      <button data-u="ms" class="on">ms</button><button data-u="s">s</button><button data-u="hz">Hz</button>
+    </div>
+  </div>
+  <div class="quick" id="quick"></div>
+  <div class="tapnote" data-i18n="tapHint">Пробел (Space) или T — задать темп тапом</div>
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="main" role="tab">Notes / Reverb</button>
+  <button class="tab" data-tab="comp" role="tab">Compressor</button>
+</div>
+
+<div id="tab-main">
+  <section class="card">
+    <div class="card-head">
+      <h2 data-i18n="reverb">Реверб</h2>
+      <span class="hint" data-i18n="presetHint">пресеты считаются от BPM</span>
+    </div>
+    <div class="presets" id="presets"></div>
+
+    <div class="io">
+      <label data-i18n="predelay">Pre-delay</label>
+      <select id="predelay"></select>
+    </div>
+    <div class="io" style="margin-top:12px">
+      <label data-i18n="decay">Decay</label>
+      <select id="decay"></select>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 data-i18n="notes">Длительности</h2>
+      <span class="hint" data-i18n="copyHint">клик — копировать</span>
+    </div>
+    <div class="tbl" id="notes"></div>
+  </section>
+</div>
+
+<div id="tab-comp" hidden>
+  <section class="card">
+    <div class="context">
+      <span class="ctxlabel" data-i18n="cMode">режим</span>
+      <div class="seg" id="cmode"></div>
+      <span class="ctxlabel" data-i18n="cGenre">жанр</span>
+      <div class="chips" id="cgenre"></div>
+      <div class="modehint" id="cmodehint"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 data-i18n="cTimings">Рабочие длительности</h2>
+      <span class="hint" data-i18n="cTimingHint">ms при текущем BPM · клик — копировать</span>
+    </div>
+    <div class="tbl" id="ctiming"></div>
+    <div class="barline num" id="cbarline"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 data-i18n="cPresets">Пресеты по источнику</h2>
+      <span class="hint" data-i18n="cPresetHint">живые значения от BPM, режима и жанра</span>
+    </div>
+    <div class="presets" id="cpresets"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 data-i18n="cSidechain">Sidechain от кика</h2>
+      <span class="hint" data-i18n="cScHint">duck баса и пэдов от бочки</span>
+    </div>
+    <div class="sc" id="csc"></div>
+    <div class="schint" data-i18n="cHelp">Кик — в детектор, бас и пэды — в цепь. Release не длиннее 1/4, иначе возврат слышно как провал.</div>
+  </section>
+</div>
+
+<div class="foot">
+  <div class="num" id="msPerBeat"></div>
+  <div data-i18n="keysHelp"></div>
+  <div class="credit">
+    <span data-i18n="credit">© 2026 Иван Жуковин</span> ·
+    <a href="https://zhukovin.ru">zhukovin.ru</a>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="lib.js"></script>
+<script src="compressor-lib.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const L = window.BPMLib;
+  const C = window.CompLib;
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('bpmtool.' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('bpmtool.' + k, JSON.stringify(v)); } catch {} }
+  };
+  const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+
+  // ---------- i18n ----------
+  const I18N = {
+    ru: {
+      title: 'BPM → ms · реверб · компрессор',
+      tagline: 'bpm → ms · реверб',
+      tap: 'TAP', metro: 'Метроном', stop: 'Стоп',
+      tapHint: 'Пробел (Space) или T — задать темп тапом',
+      reverb: 'Реверб', presetHint: 'пресеты считаются от BPM',
+      predelay: 'Pre-delay', decay: 'Decay',
+      notes: 'Длительности', copyHint: 'клик — копировать',
+      straight: 'Ровно', dotted: 'Пунктир ·', triplet: 'Триоль',
+      copyDecay: 'копировать decay', copyPd: 'копировать pre-delay',
+      bars: { 0.25: '¼ такта', 0.5: '½ такта', 1: '1 такт', 2: '2 такта' },
+      beatLine: (beat, bar) => `1 доля = ${beat} · 1 такт = ${bar}`,
+      copied: 'скопировано', linkCopied: 'ссылка скопирована',
+      quick: 'быстрый темп',
+      bpmHint: 'Тяните влево-вправо, ⇧ — десятками',
+      keysHelp: 'Space / T — tap · M — метроном · ↑↓ — BPM ±1 · ⇧+↑↓ — ±10',
+      credit: '© 2026 Иван Жуковин',
+      langLabel: 'EN', themeLabel: 'Сменить тему', shareTitle: 'Скопировать ссылку',
+      cMode: 'режим', cGenre: 'жанр',
+      cTimings: 'Рабочие длительности', cTimingHint: 'ms при текущем BPM · клик — копировать',
+      cNote: 'нота',
+      cPresets: 'Пресеты по источнику', cPresetHint: 'живые значения от BPM, режима и жанра',
+      cSidechain: 'Sidechain от кика', cScHint: 'duck баса и пэдов от бочки',
+      cScPre: 'до удара', cScHold: 'держать', cScRelease: 'release',
+      cScLook: 'lookahead', cScDepth: 'глубина', cDetector: 'детектор',
+      cHelp: 'Кик — в детектор, бас и пэды — в цепь. Release не длиннее 1/4, иначе возврат слышно как провал.',
+      cModeHints: {
+        track: 'инструменты и вокал по отдельности',
+        bus: 'параллель / джамп-шина: быстрее, злее, выше ratio',
+        master: 'прозрачный мастер: медленно, 1–2 дБ'
+      },
+      cBeat: v => `1 доля = ${v} ms`,
+      cBar: v => `1 такт = ${v} ms`
+    },
+    en: {
+      title: 'BPM → ms · reverb · compressor',
+      tagline: 'bpm → ms · reverb',
+      tap: 'TAP', metro: 'Metronome', stop: 'Stop',
+      tapHint: 'Space or T — tap the tempo',
+      reverb: 'Reverb', presetHint: 'presets follow BPM',
+      predelay: 'Pre-delay', decay: 'Decay',
+      notes: 'Note values', copyHint: 'click to copy',
+      straight: 'Straight', dotted: 'Dotted ·', triplet: 'Triplet',
+      copyDecay: 'copy decay', copyPd: 'copy pre-delay',
+      bars: { 0.25: '¼ bar', 0.5: '½ bar', 1: '1 bar', 2: '2 bars' },
+      beatLine: (beat, bar) => `1 beat = ${beat} · 1 bar = ${bar}`,
+      copied: 'copied', linkCopied: 'link copied',
+      quick: 'quick tempo',
+      bpmHint: 'Drag left-right, ⇧ for steps of 10',
+      keysHelp: 'Space / T — tap · M — metronome · ↑↓ — BPM ±1 · ⇧+↑↓ — ±10',
+      credit: '© 2026 Ivan Zhukovin',
+      langLabel: 'RU', themeLabel: 'Toggle theme', shareTitle: 'Copy link',
+      cMode: 'mode', cGenre: 'genre',
+      cTimings: 'Working note values', cTimingHint: 'ms at current BPM · click to copy',
+      cNote: 'note',
+      cPresets: 'Source presets', cPresetHint: 'live values from BPM, mode and genre',
+      cSidechain: 'Kick sidechain', cScHint: 'duck bass and pads from the kick',
+      cScPre: 'pre', cScHold: 'hold', cScRelease: 'release',
+      cScLook: 'lookahead', cScDepth: 'depth', cDetector: 'detector',
+      cHelp: 'Kick into the detector, bass and pads into the chain. Keep release at 1/4 or shorter, otherwise the return sounds like a hole.',
+      cModeHints: {
+        track: 'individual instruments and vocals',
+        bus: 'parallel / jump bus: faster, harder, higher ratio',
+        master: 'transparent master: slow, 1–2 dB'
+      },
+      cBeat: v => `1 beat = ${v} ms`,
+      cBar: v => `1 bar = ${v} ms`
+    }
+  };
+
+  const T = k => I18N[lang][k];
+
+  // ---------- state from URL / storage ----------
+  const params = new URLSearchParams(location.search);
+  const SIGS = ['2/4', '3/4', '4/4', '5/4', '6/8', '7/8'];
+  const normSig = v => {
+    if (SIGS.includes(v)) return v;
+    if (v && /^\d+$/.test(v) && SIGS.includes(v + '/4')) return v + '/4';
+    return null;
+  };
+  const MODE_IDS = C.MODES.map(m => m.id);
+  const GENRE_IDS = C.GENRES.map(g => g.id);
+
+  let lang = params.get('lang') || store.get('lang', (navigator.language || 'ru').startsWith('ru') ? 'ru' : 'en');
+  if (!I18N[lang]) lang = 'ru';
+  let bpm = clamp(parseFloat(params.get('bpm')) || parseFloat(store.get('bpm', 120)) || 120, 20, 400);
+  let sig = normSig(params.get('sig')) || normSig(store.get('sig', '4/4')) || '4/4';
+  let unit = store.get('unit', 'ms');
+  let theme = store.get('theme', null);
+  // вкладка не запоминается: всегда открывается Notes / Reverb (главное), компрессор — по клику
+  let tab = 'main';
+  let cmode = MODE_IDS.includes(params.get('mode')) ? params.get('mode')
+    : (MODE_IDS.includes(store.get('cmode', 'track')) ? store.get('cmode', 'track') : 'track');
+  let cgenre = GENRE_IDS.includes(params.get('genre')) ? params.get('genre')
+    : (GENRE_IDS.includes(store.get('cgenre', 'pop')) ? store.get('cgenre', 'pop') : 'pop');
+
+  const { NOTES, MODS } = L;
+  const qMs = q => L.qMs(q, bpm);
+  const barMs = () => L.barMs(bpm, sig);
+  const { fmtMs, fmtS, fmtHz } = L;
+
+  const alt = v => unit === 's' ? `${fmtMs(v)} ms` : `${fmtS(v)} s`;
+  const primary = v => unit === 'ms' ? fmtMs(v) : unit === 's' ? fmtS(v) : fmtHz(1000 / v);
+
+  const PRESETS = [
+    { name: 'Tight ambience', bars: 0.25, pd: 0.0625 },
+    { name: 'Small room', bars: 0.5, pd: 0.0625 },
+    { name: 'Large room', bars: 1, pd: 0.125 },
+    { name: 'Hall', bars: 2, pd: 0.25 }
+  ];
+  // самые частые темпы поп-чартов: баллады/поп/денс/хип-хоп
+  const QUICK = [90, 100, 120, 128, 140];
+
+  // ---------- URL sync ----------
+  let urlPending = false;
+  function syncUrl() {
+    if (urlPending) return;
+    urlPending = true;
+    const run = () => {
+      urlPending = false;
+      const p = new URLSearchParams();
+      p.set('bpm', bpm);
+      p.set('sig', sig);
+      p.set('lang', lang);
+      if (tab === 'comp') { p.set('mode', cmode); p.set('genre', cgenre); }
+      try { history.replaceState(null, '', location.pathname + '?' + p.toString()); } catch {}
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run); else run();
+  }
+
+  // ---------- reverb ----------
+  function renderReverbPresets() {
+    const bm = barMs();
+    $('#presets').innerHTML = PRESETS.map(p => {
+      const ms = bm * p.bars, pd = qMs(p.pd);
+      return `<article class="preset">
+        <div>
+          <div class="nm">${p.name}</div>
+          <div class="bars">${T('bars')[p.bars]}</div>
+        </div>
+        <div class="pv num" data-copy="${fmtMs(ms)}" title="${T('copyDecay')}">${fmtMs(ms)}<small>ms</small></div>
+        <div class="pd" data-copy="${fmtMs(pd)}" title="${T('copyPd')}">pre-delay <b class="num">${fmtMs(pd)}</b> ms</div>
+      </article>`;
+    }).join('');
+  }
+
+  const pdSel = $('#predelay'), dcSel = $('#decay');
+  const PD = NOTES.filter(n => n.q <= 1);
+  const DC = [
+    { label: '1/8', q: 0.5 }, { label: '1/4', q: 1 }, { label: '1/2', q: 2 },
+    { label: () => T('bars')[1], q: () => L.barQ(sig) },
+    { label: () => T('bars')[2], q: () => L.barQ(sig) * 2 }
+  ];
+  const fillSelect = (sel, list, prev) => {
+    sel.innerHTML = list.map((o, i) => `<option value="${i}">${typeof o.label === 'function' ? o.label() : o.label}</option>`).join('');
+    sel.value = String(clamp(prev, 0, list.length - 1));
+  };
+  function renderReverb() {
+    const prev = +dcSel.value;
+    fillSelect(dcSel, DC, isNaN(prev) ? 3 : prev);
+    renderReverbPresets();
+  }
+
+  // ---------- notes ----------
+  function renderNotes() {
+    let html = '<div class="h"></div>' + MODS.map(m => `<div class="h">${T(m.key)}</div>`).join('');
+    for (const n of NOTES) {
+      html += `<div class="rl">${n.label}</div>`;
+      for (const m of MODS) {
+        const ms = qMs(n.q * m.mul);
+        html += `<div class="cell" data-copy="${primary(ms)}" title="${n.label} ${T(m.key)} = ${fmtMs(ms)} ms">
+          <div class="p">${primary(ms)}</div><div class="s">${alt(ms)}</div></div>`;
+      }
+    }
+    $('#notes').innerHTML = html;
+    $('#msPerBeat').textContent = T('beatLine')(fmtMs(qMs(1)) + ' ms', fmtS(barMs()) + ' s');
+  }
+
+  // ---------- quick chips ----------
+  function renderQuick() {
+    $('#quick').innerHTML = `<span class="cap">${T('quick')}</span>` + QUICK.map(v =>
+      `<button data-bpm="${v}" class="${Math.abs(bpm - v) < 0.05 ? 'on' : ''}">${v}</button>`).join('');
+  }
+
+  // ---------- compressor ----------
+  const fmtAtk = v => String(Math.round(v * 10) / 10);
+  const fmtRel = v => v >= 100 ? String(Math.round(v)) : String(Math.round(v * 10) / 10);
+  const fmtRatio = v => String(Math.round(v * 10) / 10);
+  const fmtDepth = v => (Math.round(v * 10) / 10).toFixed(1);
+  const fmtTiming = v => v >= 1000 ? String(Math.round(v)) : v >= 100 ? String(Math.round(v * 10) / 10) : v.toFixed(2);
+
+  function renderCompContext() {
+    $('#cmode').innerHTML = C.MODES.map(m =>
+      `<button data-mode="${m.id}" class="${m.id === cmode ? 'on' : ''}">${m[lang]}</button>`).join('');
+    $('#cgenre').innerHTML = C.GENRES.map(g =>
+      `<button class="chip ${g.id === cgenre ? 'on' : ''}" data-genre="${g.id}">${g[lang]}</button>`).join('');
+    $('#cmodehint').textContent = T('cModeHints')[cmode];
+  }
+
+  function renderCompTiming() {
+    let html = `<div class="h">${T('cNote')}</div>` + C.MODS.map(m => `<div class="h">${T(m.key)}</div>`).join('');
+    for (const q of C.TIMING_NOTES) {
+      html += `<div class="rl">${C.noteLabel(q)}</div>`;
+      for (const m of C.MODS) {
+        const ms = L.qMs(q * m.mul, bpm);
+        html += `<div class="cell" data-copy="${fmtTiming(ms)}" title="${C.noteLabel(q)} ${T(m.key)} = ${fmtMs(ms)} ms">
+          <div class="p num">${fmtTiming(ms)}</div></div>`;
+      }
+    }
+    $('#ctiming').innerHTML = html;
+    const beat = fmtTiming(L.qMs(1, bpm)), bar = fmtTiming(L.barMs(bpm, sig));
+    $('#cbarline').innerHTML =
+      `<span data-copy="${beat}">${T('cBeat')(beat)}</span> · <span data-copy="${bar}">${T('cBar')(bar)}</span>`;
+  }
+
+  function renderCompPresets() {
+    $('#cpresets').innerHTML = C.GROUPS.map(g => {
+      const p = C.buildPreset(g.id, cgenre, cmode, bpm);
+      return `<article class="preset">
+        <div class="phead"><span class="nm">${g[lang]}</span><span class="tag num">${cmode}</span></div>
+        <div class="vals">
+          <div class="v" role="button" tabindex="0" data-copy="${fmtAtk(p.attack)}" title="attack">
+            <span class="k">attack</span>
+            <span class="p num">${fmtAtk(p.attack)}<small>ms</small></span>
+            <span class="n">&nbsp;</span>
+          </div>
+          <div class="v" role="button" tabindex="0" data-copy="${fmtRel(p.releaseMs)}" title="release">
+            <span class="k">release</span>
+            <span class="p num">${fmtRel(p.releaseMs)}<small>ms</small></span>
+            <span class="n num">${C.noteLabel(p.releaseQ)}</span>
+          </div>
+          <div class="v" role="button" tabindex="0" data-copy="${fmtRatio(p.ratio)}" title="ratio">
+            <span class="k">ratio</span>
+            <span class="p num">${fmtRatio(p.ratio)}<small>:1</small></span>
+            <span class="n">&nbsp;</span>
+          </div>
+        </div>
+        <div class="meta num">
+          <span data-copy="${p.thr[0]}…${p.thr[1]}" title="threshold">threshold ${p.thr[0]}…${p.thr[1]} dB</span>
+          <span data-copy="${p.knee}" title="knee">knee ${p.knee} dB</span>
+        </div>
+        <p class="why">${p.why[lang]}</p>
+      </article>`;
+    }).join('');
+  }
+
+  function renderCompSidechain() {
+    const s = C.buildSidechain(cgenre, cmode, bpm);
+    const cell = (k, value, u, note, copy) => `<div class="scv" role="button" tabindex="0" data-copy="${copy}" title="${k}">
+      <span class="k">${k}</span>
+      <span class="p num">${value}<small>${u}</small></span>
+      <span class="n num">${note || '&nbsp;'}</span>
+    </div>`;
+    $('#csc').innerHTML =
+      cell(T('cScPre'), fmtTiming(s.preMs), 'ms', C.noteLabel(s.preQ), fmtTiming(s.preMs)) +
+      cell(T('cScHold'), fmtTiming(s.holdMs), 'ms', C.noteLabel(s.holdQ), fmtTiming(s.holdMs)) +
+      cell(T('cScRelease'), fmtTiming(s.relMs), 'ms', C.noteLabel(s.relQ), fmtTiming(s.relMs)) +
+      cell(T('cScLook'), String(s.look), 'ms', T('cDetector'), String(s.look)) +
+      cell(T('cScDepth'), fmtDepth(s.depth), 'dB', '&nbsp;', fmtDepth(s.depth));
+  }
+
+  // ---------- bpm ----------
+  const bpmInput = $('#bpm');
+  function fitBpm() {
+    bpmInput.style.width = (Math.max(2, String(bpmInput.value).length) + 0.35) + 'ch';
+  }
+  function setBpm(v, save = true) {
+    bpm = clamp(Math.round(v * 10) / 10, 20, 400);
+    bpmInput.value = bpm; fitBpm();
+    if (save) store.set('bpm', bpm);
+    renderNotes(); renderReverbPresets(); renderQuick();
+    renderCompTiming(); renderCompPresets(); renderCompSidechain();
+    if (save) syncUrl();
+  }
+  bpmInput.addEventListener('input', () => {
+    const v = parseFloat(bpmInput.value);
+    fitBpm();
+    if (v > 0) {
+      bpm = clamp(v, 20, 400); store.set('bpm', bpm);
+      renderNotes(); renderReverbPresets(); renderQuick();
+      renderCompTiming(); renderCompPresets(); renderCompSidechain();
+      syncUrl();
+    }
+  });
+  bpmInput.addEventListener('change', () => setBpm(parseFloat(bpmInput.value) || bpm));
+  $('#minus').addEventListener('click', () => setBpm(bpm - 1));
+  $('#plus').addEventListener('click', () => setBpm(bpm + 1));
+
+  // drag on the number
+  let drag = null;
+  bpmInput.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    drag = { x: e.clientX, start: bpm, moved: false };
+    bpmInput.setPointerCapture(e.pointerId);
+  });
+  bpmInput.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) < 4) return;
+    drag.moved = true;
+    e.preventDefault();
+    document.body.classList.add('dragging');
+    const k = e.shiftKey ? 2 : 0.5;
+    setBpm(drag.start + Math.round(dx) * k);
+  });
+  ['pointerup', 'pointercancel'].forEach(ev => bpmInput.addEventListener(ev, () => {
+    if (drag && drag.moved) bpmInput.blur();
+    drag = null;
+    document.body.classList.remove('dragging');
+  }));
+  $('#quick').addEventListener('click', e => {
+    const b = e.target.closest('[data-bpm]');
+    if (b) setBpm(parseFloat(b.dataset.bpm));
+  });
+
+  $('#sig').value = sig;
+  $('#sig').addEventListener('change', e => {
+    sig = e.target.value;
+    store.set('sig', sig);
+    renderNotes(); renderReverb(); renderCompTiming(); syncUrl();
+  });
+
+  document.querySelectorAll('#unit button').forEach(b => b.addEventListener('click', () => {
+    unit = b.dataset.u;
+    document.querySelectorAll('#unit button').forEach(x => x.classList.toggle('on', x === b));
+    store.set('unit', unit); renderNotes();
+  }));
+
+  // compressor controls
+  $('#cmode').addEventListener('click', e => {
+    const b = e.target.closest('[data-mode]');
+    if (!b) return;
+    cmode = b.dataset.mode;
+    store.set('cmode', cmode);
+    renderCompContext(); renderCompPresets(); renderCompSidechain(); syncUrl();
+  });
+  $('#cgenre').addEventListener('click', e => {
+    const b = e.target.closest('[data-genre]');
+    if (!b) return;
+    cgenre = b.dataset.genre;
+    store.set('cgenre', cgenre);
+    renderCompContext(); renderCompPresets(); renderCompSidechain(); syncUrl();
+  });
+
+  // ---------- tabs ----------
+  function setTab(name, save = true) {
+    tab = name === 'comp' ? 'comp' : 'main';
+    $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    $('#tab-main').hidden = tab !== 'main';
+    $('#tab-comp').hidden = tab !== 'comp';
+    if (save) syncUrl();
+  }
+  $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+  // ---------- tap / metronome ----------
+  let taps = [];
+  const tapBtn = $('#tap');
+  function tap() {
+    const now = performance.now();
+    if (taps.length && now - taps[taps.length - 1] > 2200) taps = [];
+    taps.push(now);
+    if (taps.length > 8) taps.shift();
+    tapBtn.classList.add('hit');
+    setTimeout(() => tapBtn.classList.remove('hit'), 90);
+    if (taps.length >= 2) {
+      const iv = [];
+      for (let i = 1; i < taps.length; i++) iv.push(taps[i] - taps[i - 1]);
+      iv.sort((a, b) => a - b);
+      const med = iv[Math.floor(iv.length / 2)];
+      if (med > 0) setBpm(60000 / med);
+    }
+  }
+  tapBtn.addEventListener('click', tap);
+
+  const metro = { ctx: null, timer: null, next: 0, beat: 0, playing: false };
+  const metroBtn = $('#metro');
+  function tick(time) {
+    const ctx = metro.ctx, o = ctx.createOscillator(), g = ctx.createGain();
+    const acc = metro.beat % Math.max(1, Math.round(L.barQ(sig))) === 0;
+    o.type = 'square';
+    o.frequency.value = acc ? 1800 : 1200;
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(acc ? 0.35 : 0.18, time + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+    o.connect(g).connect(ctx.destination);
+    o.start(time); o.stop(time + 0.07);
+  }
+  function schedule() {
+    const ctx = metro.ctx;
+    while (metro.next < ctx.currentTime + 0.12) {
+      tick(metro.next);
+      metro.next += 60 / bpm;
+      metro.beat++;
+    }
+  }
+  function renderMetroBtn() {
+    metroBtn.innerHTML = (metro.playing ? '■ ' + T('stop') : '▶ ' + T('metro')) + '<kbd>M</kbd>';
+    metroBtn.classList.toggle('playing', metro.playing);
+  }
+  function startMetro() {
+    if (!metro.ctx) metro.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (metro.ctx.state === 'suspended') metro.ctx.resume();
+    metro.playing = true; metro.beat = 0;
+    metro.next = metro.ctx.currentTime + 0.06;
+    clearInterval(metro.timer);
+    metro.timer = setInterval(schedule, 25);
+    schedule(); renderMetroBtn();
+  }
+  function stopMetro() {
+    metro.playing = false; clearInterval(metro.timer); renderMetroBtn();
+  }
+  metroBtn.addEventListener('click', () => metro.playing ? stopMetro() : startMetro());
+
+  // ---------- theme ----------
+  const themeBtn = $('#theme');
+  function applyTheme(next, save = true) {
+    theme = next;
+    document.documentElement.dataset.theme = next;
+    document.querySelector('meta[name=theme-color]').setAttribute('content', next === 'light' ? '#fbfaf6' : '#111111');
+    themeBtn.textContent = next === 'light' ? '☀' : '☾';
+    themeBtn.title = T('themeLabel');
+    if (save) store.set('theme', next);
+  }
+  themeBtn.addEventListener('click', () => applyTheme(theme === 'light' ? 'dark' : 'light'));
+
+  // ---------- copy / toast ----------
+  const toast = $('#toast');
+  let toastT = null;
+  function note(text) {
+    toast.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => toast.classList.remove('show'), 1200);
+  }
+  async function copy(text, label) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+      else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      note(label || `${text} — ${T('copied')}`);
+    } catch {}
+  }
+  document.addEventListener('click', e => {
+    const c = e.target.closest('[data-copy]');
+    if (c) copy(c.dataset.copy);
+  });
+  $('#share').addEventListener('click', async () => {
+    syncUrl();
+    const url = location.href;
+    if (navigator.share) {
+      try { await navigator.share({ title: document.title, url }); return; } catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+    copy(url, T('linkCopied'));
+  });
+
+  // ---------- lang ----------
+  function renderLang() {
+    document.documentElement.lang = lang;
+    document.title = T('title');
+    $('#lang').textContent = T('langLabel');
+    $('#share').title = T('shareTitle');
+    bpmInput.title = T('bpmHint');
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.dataset.i18n;
+      if (typeof T(k) === 'string') el.textContent = T(k);
+    });
+    renderMetroBtn(); renderNotes(); renderReverb(); renderQuick();
+    renderCompContext(); renderCompTiming(); renderCompPresets(); renderCompSidechain();
+  }
+  $('#lang').addEventListener('click', () => {
+    lang = lang === 'ru' ? 'en' : 'ru';
+    store.set('lang', lang);
+    renderLang(); syncUrl();
+  });
+
+  // ---------- keyboard ----------
+  document.addEventListener('keydown', e => {
+    const target = e.target;
+    // копирование с клавиатуры на плитках (role=button)
+    if (target.closest && target.closest('[data-copy]') && (e.key === 'Enter' || e.code === 'Space')) {
+      e.preventDefault();
+      copy(target.closest('[data-copy]').dataset.copy);
+      return;
+    }
+    const tag = (target.tagName || '').toLowerCase();
+    const typing = tag === 'input' || tag === 'select' || tag === 'textarea';
+    const step = e.shiftKey ? 10 : 1;
+    if (e.key === 'ArrowUp' && !typing) { e.preventDefault(); setBpm(bpm + step); }
+    else if (e.key === 'ArrowDown' && !typing) { e.preventDefault(); setBpm(bpm - step); }
+    else if (!typing && (e.code === 'Space' || e.key === ' ')) { e.preventDefault(); tap(); }
+    else if (!typing && /^[tTтТ]$/.test(e.key)) tap();
+    else if (!typing && /^[mMьЬ]$/.test(e.key)) metro.playing ? stopMetro() : startMetro();
+  });
+
+  // ---------- init ----------
+  if (theme === null) theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  applyTheme(theme, false);
+  fillSelect(pdSel, PD, 2);
+  fillSelect(dcSel, DC, 3);
+  $('#sig').value = sig;
+  bpmInput.value = bpm; fitBpm();
+  renderNotes(); renderReverb();
+  renderLang();
+  setTab(tab, false);
+  // старые ссылки вида /bpm/#comp больше не открывают компрессор — чистим hash
+  if (location.hash) {
+    try { history.replaceState(null, '', location.pathname + location.search); } catch {}
+  }
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
